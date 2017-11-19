@@ -161,7 +161,7 @@ var g = svg.selectAll()
         .attr("x1", function(d) { return x(d.date); })
         .attr("y1", function(d) { return y(d.time); })
 		    //d3.min gets the min date from the date x-axis scale
-		.attr("x2", function(d) { return x(d3.min(x)); })
+		    //.attr("x2", function(d) { return x(d3.min(x)); })
         .attr("y2", function(d) { return y(d.time); });
 
   //The vertical dashed line that appears when a circle marker is moused over
@@ -173,9 +173,9 @@ var g = svg.selectAll()
         .style("opacity", 0)
         .attr("x1", function(d) { return x(d.date); })
         .attr("y1", function(d) { return y(d.time); })
-		.attr("x2", function(d) { return x(d.date); })
+		    .attr("x2", function(d) { return x(d.date); })
         .attr("y2", height);
-  // SLA
+  
   
    //circles are selected again to add the mouseover functions
  	 g.selectAll("circle")
@@ -183,7 +183,7 @@ var g = svg.selectAll()
             div.transition()		
                .duration(200)		
                .style("opacity", .9);	
-            console.log("Time here "+d.time);
+          
             if(d.time < 79200)
             {
             div.html(formatTime(d.date))	
