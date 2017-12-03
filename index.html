@@ -113,27 +113,30 @@ function make_y_axis() {
       .orient("left")
       //.ticks(5)
 }
-
+function inputData(dataFile,filter){
 //reading in CSV which contains data
-d3.csv("logs.csv", function(error, data) {
+return d3.csv(dataFile, function(error, data) {
   data.forEach(function(d) {
     d.date = parseDate.parse(d.date);
     d.time = +d.time;
   });
-
+  
+  data = data.filter(function(d) {
+  return d.date > filter;
+  })
   //using imported data to define extent of x and y domains
   x.domain(d3.extent(data, function(d) { return d.date; }));
   y.domain(d3.extent(data, function(d) { return d.time; }));
 
 // Draw the y Grid lines
-	svg.append("g")            
-		.attr("class", "grid")
-		.call(make_y_axis()
+svg.append("g")            
+	   .attr("class", "grid")
+	   .call(make_y_axis()
 			.tickSize(-width, 0, 0)
 			.tickFormat("")
 		)
   
-  svg.append("path")
+svg.append("path")
       .datum(data)
       .attr("class", "line")
       .attr("d", line);
@@ -299,7 +302,10 @@ function wrap(text, width) {
 }
 
 });
-
+}
+var cutoffDate = new Date();
+var filter = cutoffDate.setDate(cutoffDate.getDate() - 180);
+inputData("logs.csv",filter);
 </script>
 </body>
 </html>
