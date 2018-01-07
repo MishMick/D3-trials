@@ -53,9 +53,14 @@ div.tooltip {
 
 </style>
 <body>
+
+    <div id="option">
+        <input name="updateButton" type="button" value="Update" onclick="updateGraph(new Date('2017-06-11')) "/>
+    </div>
+
 <script src="./d3-3.3.0/d3.js"></script>
 <script>
-
+var dataFile = "logs.csv";
 //I increased the bottom margin a little bit because the x label is tied to it; so I could lower the x label a little bit
 var margin = {top: 50, right: 20, bottom: 60, left: 90},
     width = window.innerWidth - margin.left - margin.right-90,
@@ -99,7 +104,6 @@ var svg = d3.select("body").append("svg")
 
 //The format in the CSV, which d3 will read
 var parseDate = d3.time.format("%Y-%m-%d %X");
-
 //format for tooltip
 //https://github.com/mbostock/d3/wiki/Time-Formatting
 //var formatTime = d3.time.format("%e %b");
@@ -113,20 +117,51 @@ function make_y_axis() {
       .orient("left")
       //.ticks(5)
 }
-function inputData(dataFile,filter){
+
+function updateGraph(filter){
+    d3.csv(dataFile, function (error, data) {
+        data.forEach(function (d) {
+            d.date = parseDate.parse(d.date);
+            d.time = +d.time;
+        });
+  
+    data = data.filter(function(d) {
+    return d.date > filter;
+  });
+    	// Scale the range of the data again 
+        x.domain(d3.extent(data, function (d) { return d.date; }));
+        y.domain([0, d3.max(data, function (d) { return d.time; })]);        // Select the section we want to apply our changes to
+        var svg = d3.select("body").transition();
+        // Add the valueline path.
+        svg.select(".line")   // change the line
+            .duration(750)
+            .attr("d", line(data));
+        svg.select(".x.axis") // change the x axis
+            .duration(750)
+            .call(xAxis);
+        svg.select(".y.axis") // change the y axis
+            .duration(750)
+            .call(yAxis);
+        svg.selectAll("circle")
+            .duration(750)
+            .attr("r", 4.5)
+            .attr("cx", function (d) { return x(d.date); })
+            .attr("cy", function (d) { return y(d.time); });
+ });   
+}
+
+function inputData(dataFile){
 //reading in CSV which contains data
-return d3.csv(dataFile, function(error, data) {
+ d3.csv(dataFile, function(error, data) {
   data.forEach(function(d) {
     d.date = parseDate.parse(d.date);
     d.time = +d.time;
   });
-  
-  data = data.filter(function(d) {
-  return d.date > filter;
-  })
+ 
   //using imported data to define extent of x and y domains
   x.domain(d3.extent(data, function(d) { return d.date; }));
-  y.domain(d3.extent(data, function(d) { return d.time; }));
+  y.domain([0, d3.max(data, function (d) { return d.time; })]);
+  //y.domain(d3.extent(data, function(d) { return d.time; }));
 
 // Draw the y Grid lines
 svg.append("g")            
@@ -135,12 +170,12 @@ svg.append("g")
 			.tickSize(-width, 0, 0)
 			.tickFormat("")
 		)
-  
+
 svg.append("path")
       .datum(data)
       .attr("class", "line")
       .attr("d", line);
-
+  
 //taken from http://bl.ocks.org/mbostock/3887118
 //and http://www.d3noob.org/2013/01/change-line-chart-into-scatter-plot.html
 //creating a group(g) and will append a circle and 2 lines inside each group
@@ -155,7 +190,7 @@ var g = svg.selectAll()
         .attr("cy", function(d) { return y(d.time); });
    
    //The horizontal dashed line that appears when a circle marker is moused over
-	 g.append("line")
+	 g.append("xline")
         .attr("class", "x")
         .attr("id", "dashedLine")
         .style("stroke", "steelblue")
@@ -168,7 +203,7 @@ var g = svg.selectAll()
         .attr("y2", function(d) { return y(d.time); });
 
   //The vertical dashed line that appears when a circle marker is moused over
-	g.append("line")
+	g.append("yline")
         .attr("class", "y")
         .attr("id", "dashedLine")
         .style("stroke", "steelblue")
@@ -176,7 +211,7 @@ var g = svg.selectAll()
         .style("opacity", 0)
         .attr("x1", function(d) { return x(d.date); })
         .attr("y1", function(d) { return y(d.time); })
-		    .attr("x2", function(d) { return x(d.date); })
+		.attr("x2", function(d) { return x(d.date); })
         .attr("y2", height);
   
   
@@ -275,6 +310,7 @@ svg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
 
+
 //http://bl.ocks.org/mbostock/7555321
 //This code wraps label text if it has too much text
 function wrap(text, width) {
@@ -300,12 +336,17 @@ function wrap(text, width) {
     }
   });
 }
-
 });
+
 }
+
+inputData(dataFile);
+//Call filter here
+/*
 var cutoffDate = new Date();
-var filter = cutoffDate.setDate(cutoffDate.getDate() - 180);
-inputData("logs.csv",filter);
+var filter = cutoffDate.setDate(cutoffDate.getDate() - 210);
+updateGraph(this.filter);
+*/
 </script>
 </body>
 </html>
