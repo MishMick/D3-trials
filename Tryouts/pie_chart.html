@@ -1,0 +1,85 @@
+<div id="chart"></div>
+
+<style>
+@import url(http://fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono);
+
+.slice text {
+   font-family: Droid Sans;
+}
+</style>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script>
+var w = 400;
+var h = 400;
+var r = h/2;
+var aColor = [
+    'rgb(178, 55, 56)',
+    'rgb(213, 69, 70)',
+    'rgb(230, 125, 126)',
+    'rgb(239, 183, 182)'
+]
+
+var data = [
+    {"label":"Late (n=10)", "value":10}, 
+    {"label": "Not late (n=5)", "value":5},
+];
+
+var data2 = [
+    {"label":"Late (n=15)", "value":15},
+    {"label":"Not late (n=5)", "value":5},
+];
+
+
+function updateGraph(filter){
+   var obj = d3.select("#chart svg");
+   obj.remove();
+   var newObj = d3.select('#chart').append("svg:svg").data([data2]).attr("width", w).attr("height", h).append("svg:g").attr("transform", "translate(" + r + "," + r + ")");
+   var pie = d3.layout.pie().value(function(d){return d.value;});
+    var arc = d3.svg.arc().outerRadius(r);
+// Select paths, use arc generator to draw
+var arcs = newObj.selectAll("g.slice").data(pie).enter().append("svg:g").attr("class", "slice");
+arcs.append("svg:path")
+    .attr("fill", function(d, i){return aColor[i];})
+    .attr("d", function (d) {return arc(d);})
+;
+
+// Add the text
+arcs.append("svg:text")
+    .attr("transform", function(d){
+        d.innerRadius = 100; /* Distance of label to the center*/
+        d.outerRadius = r;
+        return "translate(" + arc.centroid(d) + ")";}
+    )
+    .attr("text-anchor", "middle")
+    .text( function(d, i) {return data2[i].value + '%';})
+;
+}
+
+var vis = d3.select('#chart').append("svg:svg").data([data]).attr("width", w).attr("height", h).append("svg:g").attr("transform", "translate(" + r + "," + r + ")");
+
+var pie = d3.layout.pie().value(function(d){return d.value;});
+
+// Declare an arc generator function
+var arc = d3.svg.arc().outerRadius(r);
+
+// Select paths, use arc generator to draw
+var arcs = vis.selectAll("g.slice").data(pie).enter().append("svg:g").attr("class", "slice");
+arcs.append("svg:path")
+    .attr("fill", function(d, i){return aColor[i];})
+    .attr("d", function (d) {return arc(d);})
+;
+
+arcs.append("svg:text")
+    .attr("transform", function(d){
+        d.innerRadius = 100; 
+        d.outerRadius = r;
+        return "translate(" + arc.centroid(d) + ")";}
+    )
+    .attr("text-anchor", "middle")
+    .text( function(d, i) {return data[i].value + '%';})
+;
+
+</script>
+<input type="button" onClick="updateGraph()">Click</input>
