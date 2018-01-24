@@ -2,91 +2,25 @@
 <meta charset="utf-8">
 <meta http-equiv="Access-Control-Allow-Origin" content="*">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta content="utf-8" http-equiv="encoding">
 <header name = "Access-Control-Allow-Origin" value = "*" />
-<style>
-
-body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  margin: auto;
-  position: relative;
-  width: 960px;
-}
-
-text {
-  font: 10px sans-serif;
-}
-
-form {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-}
-
-.arc text {
-  font: 10px sans-serif;
-  text-anchor: middle;
-}
-
-.arc path {
-  stroke: #fff;
-}
-
-.axis path,
-.axis line {
-  fill: none;
-  stroke: #000;
-  stroke-width: 1.5px;
-  shape-rendering: crispEdges;
-}
-
-.line {
-  fill: none;
-  stroke: steelblue;
-  stroke-width: 3.5px;
-}
-
-.dot {
-  stroke: #000;
-}
-
-div.tooltip {   
-  position: absolute;           
-  text-align: center;           
-  width: 80px;                  
-  height: 30px;                 
-  padding: 10px;             
-  font: 16px sans-serif;  
-  color: white;   
-  font-weight: 500;   
-  background: black;   
-  border: 0px;      
-  border-radius: 4px;           
-  pointer-events: none;         
-}
-
-/* http://www.d3noob.org/2013/01/adding-grid-lines-to-d3js-graph.html */
-.grid .tick {
-    stroke: lightgrey;
-    opacity: 0.7;
-}
-
-</style>
+<link rel="stylesheet" type="text/css" href="./styles/main.css">
 <form>
   <label><input type="radio" name="dataset" value="apples" checked> Apples</label>
   <label><input type="radio" name="dataset" value="oranges"> Oranges</label>
 </form>
-<script src="./d3-3.3.0/d3.js"></script>
+<script src="../d3-3.3.0/d3.js"></script>
 <script>
-var dataFile = "logs.csv"; 
+var dataFile = "./data/logs.csv"; 
 
 var dataset = {
   apples: [2,20],
   oranges: [5,7] // previously 5 values, now only 4
 };
 
-var width = 960,
-  height = 500,
+var width = 480,
+  height = 250,
   radius = Math.min(width, height) / 2;
 
 var enterAntiClockwise = {
