@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="84368028-943c-40b5-bb79-2037993e69f4" name="Default" comment="Changed d3 source">
+    <list default="true" id="84368028-943c-40b5-bb79-2037993e69f4" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/index.html" afterPath="$PROJECT_DIR$/index.html" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -229,12 +228,20 @@
       <workItem from="1513021322439" duration="28000" />
       <workItem from="1514144219186" duration="67000" />
       <workItem from="1516437679238" duration="1216000" />
-      <workItem from="1516803147496" duration="628000" />
+      <workItem from="1516803147496" duration="645000" />
     </task>
+    <task id="LOCAL-00001" summary="Changed d3 source">
+      <created>1516804230164</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1516804230164</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="5230000" />
+    <option name="totallyTimeSpent" value="5247000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="10" y="43" width="1260" height="687" extended-state="0" />
