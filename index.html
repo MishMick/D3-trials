@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta content="utf-8" http-equiv="encoding">
 <header name = "Access-Control-Allow-Origin" value = "*" />
-<link rel="stylesheet" type="text/css" href="./styles/main.css">
-<script src="../d3-3.3.0/d3.js"></script>
+<link rel="stylesheet" type="text/css" href="./source/styles/main.css">
+<script src="./d3-3.3.0/d3.js"></script>
 <script>
-var dataFile = "./data/logs.csv"; 
+var dataFile = "./source/data/logs.csv"; 
 
 var dataset = {
   late_files: [0,31]
@@ -233,7 +233,7 @@ var g = svg.selectAll()
         .style("opacity", 0)
         .attr("x1", function(d) { return x(d.date); })
         .attr("y1", function(d) { return y(d.time); })
-    .attr("x2", function(d) { return x(d.date); })
+        .attr("x2", function(d) { return x(d.date); })
         .attr("y2", height);
   
   
