@@ -6,17 +6,12 @@
 <meta content="utf-8" http-equiv="encoding">
 <header name = "Access-Control-Allow-Origin" value = "*" />
 <link rel="stylesheet" type="text/css" href="./styles/main.css">
-<form>
-  <label><input type="radio" name="dataset" value="apples" checked> Apples</label>
-  <label><input type="radio" name="dataset" value="oranges"> Oranges</label>
-</form>
 <script src="../d3-3.3.0/d3.js"></script>
 <script>
 var dataFile = "./data/logs.csv"; 
 
 var dataset = {
-  apples: [2,20],
-  oranges: [5,7] // previously 5 values, now only 4
+  late_files: [0,31]
 };
 
 var width = 480,
@@ -44,13 +39,11 @@ var svg = d3.select("body").append("svg")
   .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
 var path = svg.selectAll("path")
-  .data(pie(dataset.apples))
+  .data(pie(dataset.late_files))
   .enter().append("path")
   .attr("fill", function(d, i) { return color(i); })
   .attr("d", arc)
   .each(function(d) { this._current = d; }); // store the initial values
-console.info(path);
-d3.selectAll("input").on("change", change);
 
 //I increased the bottom margin a little bit because the x label is tied to it; so I could lower the x label a little bit
 var margin = {top: 50, right: 20, bottom: 60, left: 90},
@@ -110,15 +103,51 @@ function make_y_axis() {
 }
 
 function updateGraph(filter){
+    // ------------------- UPDATE DATA ----------------------------------------//
     d3.csv(dataFile, function (error, data) {
         data.forEach(function (d) {
             d.date = parseDate.parse(d.date);
             d.time = +d.time;
         });
-  
-    data = data.filter(function(d) {
-    return d.date > filter;
-  });
+    data = data.filter(function(d) {  
+      return d.date > filter;
+    });
+    var latefilecounter = 0;
+     data.forEach(function (d) {
+        if(d.time > 79200)
+        {
+          latefilecounter = latefilecounter + 1;
+        }
+      });
+      this.dataset.late_files = [latefilecounter, data.length - latefilecounter];
+      // --------------------- UPDATE DATA -------------------------------------- //
+      // --------------------- UPDATE PIE CHART --------------------------------- //
+      path = path.data(pie(dataset['late_files'])); // update the data
+      // set the start and end angles to Math.PI * 2 so we can transition
+      // anticlockwise to the actual values later
+      path.enter().append("path")
+        .attr("fill", function (d, i) {
+          return color(i);
+        })
+        .attr("d", arc(enterAntiClockwise))
+        .each(function (d) {
+          this._current = {
+            data: d.data,
+            value: d.value,
+            startAngle: enterAntiClockwise.startAngle,
+            endAngle: enterAntiClockwise.endAngle
+          };
+        }); // store the initial values
+
+      path.exit()
+        .transition()
+        .duration(750)
+        .attrTween('d', arcTweenOut)
+        .remove() // now remove the exiting arcs
+
+      path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
+      // --------------------- UPDATED PIE CHART --------------------------------- //
+      // --------------------- UPDATE LINE CHART --------------------------------- //
       // Scale the range of the data again 
         x.domain(d3.extent(data, function (d) { return d.date; }));
         y.domain([0, d3.max(data, function (d) { return d.time; })]);        // Select the section we want to apply our changes to
@@ -139,6 +168,8 @@ function updateGraph(filter){
             .attr("cx", function (d) { return x(d.date); })
             .attr("cy", function (d) { return y(d.time); });
  });   
+       // --------------------- UPDATED LINE CHART --------------------------------- //
+
 }
 
 function inputData(dataFile){
@@ -331,39 +362,6 @@ function wrap(text, width) {
 
 }
 
-var timeout = setTimeout(function() {
-  d3.select("input[value=\"oranges\"]").property("checked", true).each(change);
-}, 2000);
-
-function change() {
-  clearTimeout(timeout);
-  path = path.data(pie(dataset[this.value])); // update the data
-  // set the start and end angles to Math.PI * 2 so we can transition
-  // anticlockwise to the actual values later
-  path.enter().append("path")
-      .attr("fill", function (d, i) {
-        return color(i);
-      })
-      .attr("d", arc(enterAntiClockwise))
-      .each(function (d) {
-        console.info("Data "+d);
-        this._current = {
-          data: d.data,
-          value: d.value,
-          startAngle: enterAntiClockwise.startAngle,
-          endAngle: enterAntiClockwise.endAngle
-        };
-      }); // store the initial values
-
-  path.exit()
-      .transition()
-      .duration(750)
-      .attrTween('d', arcTweenOut)
-      .remove() // now remove the exiting arcs
-
-  path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
-}
-
 // Store the displayed angles in _current.
 // Then, interpolate from _current to the new angles.
 // During the transition, _current is updated in-place by d3.interpolate.
@@ -387,5 +385,5 @@ inputData(dataFile);
 
 </script>
 <div id="option">
-        <input name="updateButton" type="button" value="Update" onclick="updateGraph(new Date('2017-06-11')) "/>
+        <input name="updateButton" type="button" value="Update" onclick="updateGraph(new Date('2017-06-15')) "/>
 </div>
