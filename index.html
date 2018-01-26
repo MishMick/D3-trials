@@ -11,7 +11,7 @@
 var dataFile = "./source/data/logs.csv"; 
 
 var dataset = {
-  late_files: [0,31]
+  late_files: [1,0]
 };
 
 var width = 480,
@@ -29,21 +29,10 @@ var pie = d3.layout.pie()
   .sort(null);
 
 var arc = d3.svg.arc()
-  .innerRadius(radius - 100)
+  .innerRadius(radius - 50)
   .outerRadius(radius - 20);
 
-var svg = d3.select("body").append("svg")
-  .attr("width", width)
-  .attr("height", height)
-  .append("g")
-  .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-var path = svg.selectAll("path")
-  .data(pie(dataset.late_files))
-  .enter().append("path")
-  .attr("fill", function(d, i) { return color(i); })
-  .attr("d", arc)
-  .each(function(d) { this._current = d; }); // store the initial values
 
 //I increased the bottom margin a little bit because the x label is tied to it; so I could lower the x label a little bit
 var margin = {top: 50, right: 20, bottom: 60, left: 90},
@@ -79,13 +68,15 @@ var line = d3.svg.line()
 var div = d3.select("body").append("div")   
     .attr("class", "tooltip")               
     .style("opacity", 0);
-
-var svg = d3.select("body").append("svg")
+    
+var linesvg = d3.select("body").append("svg")
+    .attr("id","line")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+var legendRectSize = 18;                                  
+var legendSpacing = 4;     
 //The format in the CSV, which d3 will read
 var parseDate = d3.time.format("%Y-%m-%d %X");
 //format for tooltip
@@ -93,7 +84,12 @@ var parseDate = d3.time.format("%Y-%m-%d %X");
 //var formatTime = d3.time.format("%e %b");
 var formatTime = d3.time.format("%e %b %-I:%M %p");
 var formatCount = d3.format(",");
-
+  var piesvg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("id", "pie")
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 // function for the y grid lines
 function make_y_axis() {
   return d3.svg.axis()
@@ -122,7 +118,7 @@ function updateGraph(filter){
       this.dataset.late_files = [latefilecounter, data.length - latefilecounter];
       // --------------------- UPDATE DATA -------------------------------------- //
       // --------------------- UPDATE PIE CHART --------------------------------- //
-      path = path.data(pie(dataset['late_files'])); // update the data
+      path = piesvg.selectAll("path").data(pie(dataset['late_files'])); // update the data
       // set the start and end angles to Math.PI * 2 so we can transition
       // anticlockwise to the actual values later
       path.enter().append("path")
@@ -147,22 +143,50 @@ function updateGraph(filter){
 
       path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
       // --------------------- UPDATED PIE CHART --------------------------------- //
+      // --------------------- UPDATE LEGEND ------------------------------------- //
+      piesvg.selectAll(".legend").remove();
+      var legend = piesvg.selectAll('.legend')                     // NEW
+        .data(color.domain())                                   // NEW
+        .enter()                                                // NEW
+        .append('g')                                            // NEW
+        .attr('class', 'legend')                                // NEW
+        .attr('transform', function (d, i) {                     // NEW
+          var height = legendRectSize + legendSpacing;          // NEW
+          var offset = height * color.domain().length / 2;     // NEW
+          var horz = -2.5 * legendRectSize;                       // NEW
+          var vert = i * height - offset;                       // NEW
+          return 'translate(' + horz + ',' + vert + ')';        // NEW
+        });                                                     // NEW
+
+      legend.append('rect')                                     // NEW
+        .attr('width', legendRectSize)                          // NEW
+        .attr('height', legendRectSize)                         // NEW
+        .style('fill', color)                                   // NEW
+        .style('stroke', color);                                // NEW
+
+      legend.append('text')
+        .attr('class', 'legendText')                                     // NEW
+        .attr('x', legendRectSize + legendSpacing)              // NEW
+        .attr('y', legendRectSize - legendSpacing)              // NEW
+        .text(function (d) { return d === 0 ? "after SLA " + dataset.late_files[0] : "before SLA " + dataset.late_files[1]; });   
+        
+      // --------------------- UPDATED LEGEND ------------------------------------ //
       // --------------------- UPDATE LINE CHART --------------------------------- //
       // Scale the range of the data again 
         x.domain(d3.extent(data, function (d) { return d.date; }));
         y.domain([0, d3.max(data, function (d) { return d.time; })]);        // Select the section we want to apply our changes to
-        var svg = d3.select("body").transition();
+        var linesvg = d3.select("body").transition();
         // Add the valueline path.
-        svg.select(".line")   // change the line
+        linesvg.select(".line")   // change the line
             .duration(750)
             .attr("d", line(data));
-        svg.select(".x.axis") // change the x axis
+        linesvg.select(".x.axis") // change the x axis
             .duration(750)
             .call(xAxis);
-        svg.select(".y.axis") // change the y axis
+        linesvg.select(".y.axis") // change the y axis
             .duration(750)
             .call(yAxis);
-        svg.selectAll("circle")
+        linesvg.selectAll("circle")
             .duration(750)
             .attr("r", 4.5)
             .attr("cx", function (d) { return x(d.date); })
@@ -174,25 +198,38 @@ function updateGraph(filter){
 
 function inputData(dataFile){
 //reading in CSV which contains data
+var latefilecounter = 0;
  d3.csv(dataFile, function(error, data) {
   data.forEach(function(d) {
     d.date = parseDate.parse(d.date);
     d.time = +d.time;
+    if(d.time > 79200)
+    {
+      latefilecounter = latefilecounter + 1;
+    }
   });
+  this.dataset.late_files = [latefilecounter, data.length - latefilecounter];
+  
+   var path = piesvg.selectAll("path")
+     .data(pie(dataset.late_files))
+     .enter().append("path")
+     .attr("fill", function (d, i) { return color(i); })
+     .attr("d", arc)
+     .each(function (d) { this._current = d; }); // store the initial values
   //using imported data to define extent of x and y domains
   x.domain(d3.extent(data, function(d) { return d.date; }));
   y.domain([0, d3.max(data, function (d) { return d.time; })]);
   //y.domain(d3.extent(data, function(d) { return d.time; }));
 
 // Draw the y Grid lines
-svg.append("g")            
+   linesvg.append("g")            
      .attr("class", "grid")
      .call(make_y_axis()
       .tickSize(-width, 0, 0)
       .tickFormat("")
     )
 
-svg.append("path")
+   linesvg.append("path")
       .datum(data)
       .attr("class", "line")
       .attr("d", line);
@@ -201,7 +238,7 @@ svg.append("path")
 //taken from http://bl.ocks.org/mbostock/3887118
 //and http://www.d3noob.org/2013/01/change-line-chart-into-scatter-plot.html
 //creating a group(g) and will append a circle and 2 lines inside each group
-var g = svg.selectAll()
+var g = linesvg.selectAll()
         .data(data).enter().append("g");
 
    //The markers on the line
@@ -282,14 +319,14 @@ var g = svg.selectAll()
                 .style("opacity", 0); 
         });
 
-svg.append("g")
+   linesvg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis)
       .selectAll(".tick text")
       .call(wrap, 35);
 
-svg.append("g")
+   linesvg.append("g")
     .attr("class","xMinorAxis")
     .attr("transform", "translate(0," + height + ")")
     .style({ 'stroke': 'Black', 'fill': 'none', 'stroke-width': '1px'})
@@ -297,13 +334,13 @@ svg.append("g")
     .selectAll("text").remove();
 
 //http://www.d3noob.org/2012/12/adding-axis-labels-to-d3js-graph.html
-svg.append("text")      // text label for the x-axis
+   linesvg.append("text")      // text label for the x-axis
         .attr("x", width / 2 )
         .attr("y",  height + margin.bottom)
         .style("text-anchor", "middle")
         .text("Date");
 
-svg.append("text")      // text label for the y-axis
+   linesvg.append("text")      // text label for the y-axis
         .attr("y",30 - margin.left)
         .attr("x",50 - (height / 2))
         .attr("transform", "rotate(-90)")
@@ -311,7 +348,7 @@ svg.append("text")      // text label for the y-axis
         .style("font-size", "16px")
         .text("time(in seconds)");
 
-svg.append("line")          // attach a line
+   linesvg.append("line")          // attach a line
         .style("stroke", "red")  // colour the line
         .attr("x1", 0)     // x position of the first end of the line
         .attr("y1", function (d) { return y(79200); })      // y position of the first end of the line
@@ -319,20 +356,42 @@ svg.append("line")          // attach a line
         .attr("y2", function (d) { return y(79200); });    // y position of the second end of the line
 
 //http://www.d3noob.org/2013/01/adding-title-to-your-d3js-graph.html
-svg.append("text")      // text label for chart Title
+   linesvg.append("text")      // text label for chart Title
         .attr("x", width / 2 )
         .attr("y", 0 - (margin.top/2))
         .style("text-anchor", "middle")
-    .style("font-size", "16px") 
+        .style("font-size", "16px") 
         .style("text-decoration", "underline") 
         .text("Control M file logs");
 
-
-svg.append("g")
+   linesvg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
 
+   var legend = piesvg.selectAll('.legend')                     // NEW
+     .data(color.domain())                                   // NEW
+     .enter()                                                // NEW
+     .append('g')                                            // NEW
+     .attr('class', 'legend')                                // NEW
+     .attr('transform', function (d, i) {                     // NEW
+       var height = legendRectSize + legendSpacing;          // NEW
+       var offset = height * color.domain().length / 2;     // NEW
+       var horz = -2.5 * legendRectSize;                       // NEW
+       var vert = i * height - offset;                       // NEW
+       return 'translate(' + horz + ',' + vert + ')';        // NEW
+     });                                                     // NEW
 
+   legend.append('rect')                                     // NEW
+     .attr('width', legendRectSize)                          // NEW
+     .attr('height', legendRectSize)                         // NEW
+     .style('fill', color)                                   // NEW
+     .style('stroke', color);                                // NEW
+
+   legend.append('text') 
+     .attr('class','legendText')                                     // NEW
+     .attr('x', legendRectSize + legendSpacing)              // NEW
+     .attr('y', legendRectSize - legendSpacing)              // NEW
+     .text(function (d) { return d === 0?"after SLA "+dataset.late_files[0]:"before SLA "+ dataset.late_files[1]; });   
 //http://bl.ocks.org/mbostock/7555321
 //This code wraps label text if it has too much text
 function wrap(text, width) {

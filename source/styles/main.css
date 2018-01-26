@@ -62,3 +62,10 @@ div.tooltip {
     stroke: lightgrey;
     opacity: 0.7;
 }
+
+ .legend {                                                   /* NEW */
+        font-size: 12px;                                          /* NEW */
+}                                                           /* NEW */
+rect {                                                      /* NEW */
+        stroke-width: 2;                                          /* NEW */
+}     
