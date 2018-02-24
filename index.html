@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta http-equiv="Access-Control-Allow-Origin" content="*">
-<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta content="utf-8" http-equiv="encoding">
 <header name = "Access-Control-Allow-Origin" value = "*" />
 <link rel="stylesheet" type="text/css" href="./source/styles/main.css">
+<body>
+<input type="date" id="startDate" name="startDate" size="20" onblur="startDatehandler(event);"/>
+<input type="date" id="endDate" name="endDate" size="20" onblur="endDatehandler(event);"/>
+<div id="option">
+        <input name="updateButton" type="button" value="Update" onclick="updateGraph(startDate, endDate) "/>
+</div>
+</body>
 <script src="./d3-3.3.0/d3.js"></script>
-<script>
-var dataFile = "./source/data/logs.csv"; 
 
-var dataset = {
-  late_files: [1,0]
+<script>
+
+dataFile = "./source/data/logs.csv";
+//The format in the CSV, which d3 will read
+parseDate = d3.time.format("%Y-%m-%d %X");
+dataset = {
+  late_files: [0,0]
 };
 
 var width = 480,
@@ -31,7 +40,6 @@ var pie = d3.layout.pie()
 var arc = d3.svg.arc()
   .innerRadius(radius - 50)
   .outerRadius(radius - 20);
-
 
 
 //I increased the bottom margin a little bit because the x label is tied to it; so I could lower the x label a little bit
@@ -77,8 +85,7 @@ var linesvg = d3.select("body").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 var legendRectSize = 18;                                  
 var legendSpacing = 4;     
-//The format in the CSV, which d3 will read
-var parseDate = d3.time.format("%Y-%m-%d %X");
+
 //format for tooltip
 //https://github.com/mbostock/d3/wiki/Time-Formatting
 //var formatTime = d3.time.format("%e %b");
@@ -97,16 +104,37 @@ function make_y_axis() {
       .orient("left")
       //.ticks(5)
 }
-
-function updateGraph(filter){
+function startDatehandler(evt){
+    var regex = /^\d{4}-\d{2}-\d{2}$/;
+    if(!evt.target.value.match(regex)){
+        alert('Please enter valid start date');
+        document.getElementById('startDate').valueAsDate = new Date(Date.UTC(2017, 05, 01, 0, 0, 0));
+    }
+    else{
+        startDate = evt.target.value;
+    }
+}
+function endDatehandler(evt){
+    var regex = /^\d{4}-\d{2}-\d{2}$/;
+    if(!evt.target.value.match(regex)){
+        alert('Please enter valid end date');
+        document.getElementById('endDate').valueAsDate = new Date(Date.UTC(2017, 05, 22, 0, 0, 0));
+    }else{
+        endDate = evt.target.value;
+    }
+}
+function updateGraph(filterStart,filterEnd){
     // ------------------- UPDATE DATA ----------------------------------------//
+    console.info("Filters",filterStart,filterEnd);
+    filterStart = new Date(filterStart);
+    filterEnd = new Date(filterEnd);
     d3.csv(dataFile, function (error, data) {
         data.forEach(function (d) {
             d.date = parseDate.parse(d.date);
             d.time = +d.time;
         });
-    data = data.filter(function(d) {  
-      return d.date > filter;
+    data = data.filter(function(d) {
+      return d.date >= filterStart && d.date <= filterEnd;
     });
     var latefilecounter = 0;
      data.forEach(function (d) {
@@ -208,6 +236,8 @@ var latefilecounter = 0;
       latefilecounter = latefilecounter + 1;
     }
   });
+    startDate = data[0].date;
+    endDate = data[data.length-1].date;
   this.dataset.late_files = [latefilecounter, data.length - latefilecounter];
   
    var path = piesvg.selectAll("path")
@@ -233,8 +263,7 @@ var latefilecounter = 0;
       .datum(data)
       .attr("class", "line")
       .attr("d", line);
-  
-  
+
 //taken from http://bl.ocks.org/mbostock/3887118
 //and http://www.d3noob.org/2013/01/change-line-chart-into-scatter-plot.html
 //creating a group(g) and will append a circle and 2 lines inside each group
@@ -394,6 +423,9 @@ var g = linesvg.selectAll()
      .text(function (d) { return d === 0?"after SLA "+dataset.late_files[0]:"before SLA "+ dataset.late_files[1]; });   
 //http://bl.ocks.org/mbostock/7555321
 //This code wraps label text if it has too much text
+
+
+
 function wrap(text, width) {
   text.each(function() {
     var text = d3.select(this),
@@ -418,7 +450,6 @@ function wrap(text, width) {
   });
 }
 });
-
 }
 
 // Store the displayed angles in _current.
@@ -440,9 +471,43 @@ function arcTweenOut(a) {
     return arc(i(t));
   };
 }
-inputData(dataFile);
 
+window.onload = inputData(dataFile);
+
+function getMinDate() {
+    return startDate.min;
+}
+
+function getMaxDate() {
+    return endDate.max;
+}
+    var startDatefield=document.getElementById("startDate");
+    var endDatefield=document.getElementById("endDate");
+    startDatefield.valueAsDate = new Date(Date.UTC(2017, 05, 01, 0, 0, 0));
+    startDatefield.setAttribute("min", this.getMinDate());
+    endDatefield.setAttribute("max",this.getMaxDate());
+    endDatefield.valueAsDate = new Date(Date.UTC(2017, 05 ,22, 0,0,0));
+
+    if (startDatefield.type!="date"){ //if browser doesn't support input type="date", load files for jQuery UI Date Picker
+        document.write('<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />\n')
+        document.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"><\/script>\n')
+        document.write('<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"><\/script>\n')
+    }
+    if (endDatefield.type!="date"){ //if browser doesn't support input type="date", load files for jQuery UI Date Picker
+        document.write('<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />\n')
+        document.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"><\/script>\n')
+        document.write('<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"><\/script>\n')
+    }
+    /*
+    if (startDatefield.type!="date"){ //if browser doesn't support input type="date", initialize date picker widget:
+        jQuery(function($){ //on document.ready
+            $('#startDate').datepicker();
+        })
+    }
+    if (endDatefield.type!="date"){ //if browser doesn't support input type="date", initialize date picker widget:
+        jQuery(function($){ //on document.ready
+            $('#endDate').datepicker();
+        })
+    }
+    */
 </script>
-<div id="option">
-        <input name="updateButton" type="button" value="Update" onclick="updateGraph(new Date('2017-06-15')) "/>
-</div>
